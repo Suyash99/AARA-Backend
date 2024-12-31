@@ -1,0 +1,46 @@
+# Python bytecode and cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+
+# Cython build and distribution folders
+cython_debug/
+
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+
+# FastAPI specific (if using Docker, etc.)
+*.db
+*.sqlite3
+*.log
+*.pid
+*.bak
+
+# ObjectBox generated files
+# If using code generation for ObjectBox, ignore the generated files
+objectbox/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.iml
+
+# Operating system generated files
+.DS_Store  # macOS
+Thumbs.db  # Windows
+desktop.ini  # Windows
+
+# Python packaging
+*.egg
+*.egg-info/
+dist/
+build/
+*.tar.gz
+
+# Pydantic models and schemas if they are generated
+*.pydantic/
