@@ -1,16 +1,36 @@
-import objectbox.model
-from objectbox import Model, Entity
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.routes import userRoutes  # Import your routers or endpoints
+import uvicorn
+from app.appConstants import SERVER_CONFIG
 
 
-# Define a simple model
-@Entity
-class User:
-    username: str
-    email: str
-    password: str
-    user_code: str
-    colour_code: str
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="AARA-Backend",
+        description="Backend for AARA",
+        version="0.0.1",
+    )
 
-# Create a model instance
-model = Model()
-print("ObjectBox model created successfully!")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Replace with specific origins in production
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Include routers
+    app.include_router(userRoutes, prefix="/users", tags=["Users"])
+
+    return app
+
+def main():
+    """
+    The main entry point for the application.
+    """
+    app = create_app()
+    uvicorn.run(app, host=SERVER_CONFIG['SERVER_URL'], port=SERVER_CONFIG['SERVER_PORT'])
+
+if __name__ == "__main__":
+    main()

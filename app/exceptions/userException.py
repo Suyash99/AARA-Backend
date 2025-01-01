@@ -1,4 +1,4 @@
-class ValidationError(Exception):
+class UserExceptionError(Exception):
     """
     Custom exception for validation errors.
     """
