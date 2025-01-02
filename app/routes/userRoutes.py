@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends, status
-from typing import List
 from app.services.userService import UserService
 from app.mapper.userRequest import UserRequest
 from app.mapper.userResponse import UserResponse
 from app.exceptions.userException import UserExceptionError
+from app.repository.userRepository import UserRepository
+from fastapi import APIRouter, HTTPException, status, File, UploadFile, Form, Depends
+from typing import List, Optional
+from pydantic import EmailStr
 
 router = APIRouter(
     prefix="/api/v1/users",
@@ -11,34 +13,48 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_200_OK)
-def create_user(user_request: UserRequest, user_service: UserService):
+async def create_user(
+    username: str = Form(...),
+    email: EmailStr = Form(...),
+    password: str = Form(...),
+    colour_code: str = Form(...),
+    file: Optional[UploadFile] = File(None),
+    user_service: UserService = Depends(UserService(UserRepository())),
+    ):
     """
     Create a new user.
     """
     try:
-        return user_service.create_user_and_generate_hashed_token(user_request)
+        user_request = UserRequest(
+            username=username,
+            email=email,
+            password=password,
+            colour_code=colour_code
+        )
+        file_byte_array = bytearray(await file.read()) if file else None
+        return user_service.create_user(user_request,file_byte_array)
     except UserExceptionError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-@router.get("/{user_id}", response_model=UserResponse)
-def get_user(user_id: int, user_service: UserService ):
+@router.get("/{user_code}", response_model=UserResponse)
+def get_user(user_code: str, user_service: UserService ):
     """
     Retrieve a user by ID.
     """
-    user = user_service.get_user_by_id(user_id)
+    user = user_service.get_user_by_id(user_code)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 @router.get("/", response_model=List[UserResponse])
-def get_all_users(user_service: UserService = Depends(get_user_service)):
+def get_all_users(user_service: UserService):
     """
     Retrieve all users.
     """
     return user_service.get_all_users()
 
 @router.put("/{user_id}", response_model=UserResponse)
-def update_user(user_id: int, user_request: UserRequest, user_service: UserService = Depends(get_user_service)):
+def update_user(user_id: int, user_request: UserRequest, user_service: UserService):
     """
     Update an existing user.
     """
@@ -48,7 +64,7 @@ def update_user(user_id: int, user_request: UserRequest, user_service: UserServi
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/{user_id}", response_model=dict)
-def delete_user(user_id: int, user_service: UserService = Depends(get_user_service)):
+def delete_user(user_id: int, user_service: UserService):
     """
     Delete a user by ID.
     """

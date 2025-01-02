@@ -50,7 +50,7 @@ class PasswordUtils:
             return token
         except Exception as e:
             logger.error(f"error while generating hash:: {e}")
-            raise TokenException('Error while generating hash:: ' + e)
+            raise TokenException('Error while generating hash- ' + e)
 
 
     @staticmethod

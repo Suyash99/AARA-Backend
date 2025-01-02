@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from typing import Optional
 
 class UserResponse(BaseModel):
     username: str
@@ -7,6 +8,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     password: str
     colour_code: str
+    user_photo: Optional[bytes] = None
     created_at: datetime
     updated_at: datetime
 

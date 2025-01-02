@@ -1,6 +1,5 @@
 from datetime import datetime
-from objectbox.model import Entity
-class BaseModel(Entity):
+class BaseModel:
     id: int
     created_at: datetime
     updated_at: datetime

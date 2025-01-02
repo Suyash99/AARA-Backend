@@ -1,10 +1,18 @@
-from typing import List
+from typing import List, Optional
+from pathlib import Path
 from app.exceptions.userException import UserExceptionError
 from app.mapper.userMapper import UserMapper
 from app.mapper.userResponse import UserResponse
 from app.mapper.userRequest import UserRequest
 from app.repository.userRepository import UserRepository
 from app.utils.passwordUtils import PasswordUtils
+from app.utils.generateCodeForId import GenerateCodeForId
+from app.utils.storeImageUtils import save_image
+import logging
+
+logger = logging.getLogger("main")
+UPLOAD_DIR = Path("../uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
 
 class UserService:
     def __init__(self, user_repository: UserRepository):
@@ -14,11 +22,21 @@ class UserService:
         """
         self.user_repository = user_repository
 
-    def create_user_and_generate_hashed_token(self, user_request: UserRequest) -> str:
-        user = self.create_user(user_request)
+    def create_user(self, user_request: UserRequest, filebytearray: Optional[bytearray]) -> str:
+        profile_image_bytes = None
+        user_code = GenerateCodeForId.generate_random_code(6)
+        if filebytearray:
+            logger.info("User has profile photo, will ensure create img flow!")
+            filename = f'{user_code}_{user_request.username}'
+            profile_image_bytes = save_image(filename, filebytearray)
+
+        user_request.user_photo_bytes = profile_image_bytes
+        user_request.user_code = user_code
+        user = self.create_user_call_db(user_request)
         return PasswordUtils.generate_hashed_token(user)
 
-    def create_user(self, user_request: UserRequest) -> UserResponse:
+
+    def create_user_call_db(self, user_request: UserRequest) -> UserResponse:
         """
         Create a new user.
         :param user_request: UserRequest object with user details.

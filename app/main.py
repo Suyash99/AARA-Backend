@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import userRoutes  # Import your routers or endpoints
+from app.routes import userRoutes
 import uvicorn
 from app.appConstants import SERVER_CONFIG
 
