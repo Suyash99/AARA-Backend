@@ -1,6 +1,11 @@
 from app.mapper.userResponse import UserResponse
 from app.exceptions.tokenException import TokenException
 from typing import Optional
+from datetime import datetime
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import padding
+from app.appConstants import AES_ENCRY
 import bcrypt
 import hashlib
 import base64
@@ -32,14 +37,25 @@ class PasswordUtils:
         return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
 
     @staticmethod
+    def decrypt_aes_encoded_text(ecryp_user_detail:str) -> str:
+        try:
+            decryptor = Cipher(algorithms.AES(AES_ENCRY['key']), modes.ECB(), backend=default_backend()).decryptor()
+            decrypted_data = decryptor.update(ecryp_user_detail) + decryptor.finalize()
+
+            unpadder = padding.PKCS7(128).unpadder()
+            unpadded_data = unpadder.update(decrypted_data)
+            unpadded_data += unpadder.finalize()
+            return unpadded_data.decode('utf-8')
+        except Exception as e:
+            raise TokenException(f'Error refreshing token', 400)
+
+    @staticmethod
     def generate_hashed_token(user_response: UserResponse) -> str:
         try:
             # Convert UserResponse object to a JSON string
+            user_response.expiry_time = (time.time() * 1000) + (1 * 7 * 24 * 60 * 60 * 1000)  # Expire in 1 week
             user_data = user_response.model_dump_json()
-
             token_payload = user_data
-
-            token_payload.expiry_time = (time.time() * 1000) + (1 * 7 * 24 * 60 * 60 * 1000)  # Expire in 1 week
 
             # Create a SHA256 hash of the serialized data
             hash_object = hashlib.sha256(token_payload.encode('utf-8'))
@@ -50,11 +66,10 @@ class PasswordUtils:
             return token
         except Exception as e:
             logger.error(f"error while generating hash:: {e}")
-            raise TokenException('Error while generating hash- ' + e)
-
+            raise TokenException(f'Error while generating hash- {e}', 400)
 
     @staticmethod
-    def verify_hashed_token(token: str) -> Optional[dict]:
+    def verify_hashed_token(token: str) -> Optional[str]:
         """
         Verify the hashed token.
         :param token: The token to verify.
@@ -63,7 +78,6 @@ class PasswordUtils:
         try:
             # Decode the Base64 token
             decoded_hash = base64.urlsafe_b64decode(token.encode('utf-8'))
-
             token_payload = json.loads(decoded_hash.decode("utf-8"))
 
             # Extract expiry time
@@ -75,22 +89,11 @@ class PasswordUtils:
             # Check if the token is expired
             current_time_ms = time.time() * 1000
             if current_time_ms > expiry_time:
-                logger.error("Token has expired.")
-                raise TokenException("Token has expired!", 403)
-
-            # Recompute the hash from the payload and verify
-            original_payload = json.dumps(
-                {k: v for k, v in token_payload.items() if k != "expiry_time"}
-            )
-            hash_object = hashlib.sha256(original_payload.encode('utf-8')).digest()
-            recomputed_hash = base64.urlsafe_b64encode(hash_object).decode('utf-8')
-
-            if recomputed_hash != token:
-                logger.error("Token hash verification failed.")
-                raise TokenException("Token hash verification failed", 401)
+                readable_date = datetime.fromtimestamp(expiry_time/1000).isoformat(sep=' ', timespec='seconds')
+                logger.error(f"Token expired at {readable_date}, will return error")
+                raise TokenException("Token has expired!", 410)
 
             return token_payload
-
         except Exception as e:
             logger.error(f"Error verifying token: {e}")
-            return TokenException(f"Error verifying token: {e}")
+            raise TokenException(f"Error verifying token: {e}", 400)

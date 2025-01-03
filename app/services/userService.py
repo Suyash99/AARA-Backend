@@ -35,6 +35,17 @@ class UserService:
         user = self.create_user_call_db(user_request)
         return PasswordUtils.generate_hashed_token(user)
 
+    def reverify_user_and_generate_token(self,user_payload:dict) -> str:
+        user_code = user_payload['user_code']
+        user = self.get_user_by_user_code(user_code)
+
+        is_pass_verified = PasswordUtils.verify_password(user_payload['password'],user.password)
+
+        if not is_pass_verified:
+            logger.error('Tried regenerating password, password does not match in req and db!')
+            raise UserExceptionError('Password does not match!')
+
+        return PasswordUtils.generate_hashed_token(user)
 
     def create_user_call_db(self, user_request: UserRequest) -> UserResponse:
         """
@@ -46,17 +57,17 @@ class UserService:
         created_user = self.user_repository.create_user(user)
         return UserMapper.to_user_response(created_user).model_validate(created_user)
 
-    def get_user_by_id(self, user_code: str) -> UserResponse:
+    def get_user_by_user_code(self, user_code: str) -> UserResponse:
         """
         Retrieve a user by their ID.
-        :param user_id: The ID of the user.
+        :param user_code: The ID of the user.
         :return: UserResponse object if found.
         :raises UserNotFoundException: If the user is not found.
         """
         user = self.user_repository.get_user_by_user_code(user_code)
         if not user:
             raise UserExceptionError(f"User with ID {user_code} not found")
-        return UserResponse.from_orm(user)
+        return UserResponse.model_validate(user)
 
     def get_user_by_email(self, email: str) -> UserResponse:
         """
@@ -70,39 +81,38 @@ class UserService:
             raise UserExceptionError(f"User with email {email} not found", "email")
         return UserResponse.model_validate(user)
 
-    def update_user(self, user_id: int, user_request: UserRequest) -> UserResponse:
+    def update_user(self, user_code: str, user_request: UserRequest) -> UserResponse:
         """
         Update an existing user's details.
-        :param user_id: The ID of the user to update.
+        :param user_code: The user_code of the user to update.
         :param user_request: UserRequest object with updated details.
         :return: UserResponse object of the updated user.
         :raises UserNotFoundException: If the user is not found.
         """
-        user = self.user_repository.get_user_by_id(user_id)
+        user = self.user_repository.get_user_by_user_code(user_code)
         if not user:
-            raise UserExceptionError(f"User with ID {user_id} not found", "")
+            raise UserExceptionError(f"User with ID {user_code} not found", "user_code")
 
         user.username = user_request.username
         user.email = user_request.email
-        user.password = user_request.password
         user.user_code = user_request.user_code
         user.colour_code = user_request.colour_code
-        user.updated_at = user_request.updated_at
+        user.updated_at = None
 
         self.user_repository.update_user(user)
-        return UserResponse.from_orm(user)
+        return UserResponse.model_validate(user)
 
-    def delete_user(self, user_id: int) -> bool:
+    def delete_user(self, user_code: str) -> bool:
         """
         Delete a user by their ID.
-        :param user_id: The ID of the user to delete.
+        :param user_code: The ID of the user to delete.
         :return: True if the user was successfully deleted.
         :raises UserNotFoundException: If the user is not found.
         """
-        user = self.user_repository.get_user_by_id(user_id)
+        user = self.user_repository.get_user_by_user_code(user_code)
         if not user:
-            raise UserExceptionError(f"User with ID {user_id} not found", "")
-        return self.user_repository.delete_user(user_id)
+            raise UserExceptionError(f"User with ID {user_code} not found", "user_code")
+        return self.user_repository.delete_user(user_code)
 
     def get_all_users(self) -> List[UserResponse]:
         """
@@ -110,12 +120,5 @@ class UserService:
         :return: List of UserResponse objects.
         """
         users = self.user_repository.get_all_users()
-        return [UserResponse.from_orm(user) for user in users]
-
-    def count_users(self) -> int:
-        """
-        Count the total number of users.
-        :return: The count of users.
-        """
-        return self.user_repository.count_users()
+        return [UserResponse.model_validate(user) for user in users]
 

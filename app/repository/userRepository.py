@@ -12,7 +12,7 @@ class UserRepository:
 
     def get_user_by_user_code(self, user_code: str) -> Optional[User]:
         """Retrieve a user by ID."""
-        db_query = self.queryInDb("user_code = ?", [user_code]).build()
+        db_query = self.query_in_db("user_code = ?", [user_code]).build()
         users = db_query.find()
         return users[0] if users else None
 
@@ -22,13 +22,13 @@ class UserRepository:
 
     def get_user_by_email(self, email: str) -> Optional[User]:
         """Retrieve a user by email."""
-        db_query = self.queryInDb("email = ?", [email]).build()
+        db_query = self.query_in_db("email = ?", [email]).build()
         users = db_query.find()
         return users[0] if users else None
 
-    def update_user(self, user_code: str, updates: dict) -> bool:
+    def update_user(self, user_code: str) -> bool:
         """Update a user's details."""
-        db_query = self.queryInDb("user_code = ?", [user_code]).build()
+        db_query = self.query_in_db("user_code = ?", [user_code]).build()
         user = db_query.find()
         return self.box.put(user) is not None
 
@@ -36,6 +36,12 @@ class UserRepository:
         """Delete a user."""
         return self.box.remove(user_code)
 
-    def queryInDb(self, fieldNames:str,fieldValues:List[str]) -> query:
-        return self.box.query(fieldNames,fieldValues)
+    def query_in_db(self, field_names:str, field_values:List[str]) -> query:
+        return self.box.query(field_names, field_values)
 
+    def get_all_users(self) -> List[User]:
+        """
+        Fetch all users using the repository.
+        :return: List of User entities.
+        """
+        return self.box.get_all()

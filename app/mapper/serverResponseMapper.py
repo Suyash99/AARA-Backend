@@ -8,9 +8,9 @@ T = TypeVar('T')
 class ServerResponse(BaseModel, Generic[T]):
     is_success: bool
     status_code: int
-    error_message: str = ""  # Default empty string
-    error_messages: Dict[str, str] = field(default_factory=dict)  # Default empty dict
-    payload: Optional[T] = None  # Making payload optional with default None
+    error_message: str = ""
+    error_messages: Dict[str, str] = field(default_factory=dict)
+    payload: Optional[T] = None
 
     class Config:
         arbitrary_types_allowed = True

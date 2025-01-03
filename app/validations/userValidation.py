@@ -21,10 +21,10 @@ class UserValidation(User, BaseModel):
 
     @field_validator("email")
     def validate_unique_email(self, value):
-        if UserRepository.queryInDb(self,"email = ?", [value]).build().count() > 0:
+        if UserRepository.query_in_db(self, "email = ?", [value]).build().count() > 0:
             raise UserExceptionError(USER_EXCEPTION_ERRORS['VALID_UNIQUE_EMAIL'], "email")
 
     @field_validator("user_code")
     def validate_unique_user_code(self, value):
-        if UserRepository.queryInDb(self,"user_code = ?", [value]).build().count() > 0:
+        if UserRepository.query_in_db(self, "user_code = ?", [value]).build().count() > 0:
             raise UserExceptionError(USER_EXCEPTION_ERRORS['VALID_UNIQUE_USER_CODE'], "user_code")

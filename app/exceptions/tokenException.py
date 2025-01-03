@@ -11,7 +11,7 @@ class TokenException(Exception):
         :param code: HTTP status code or custom error code. Defaults to 400.
         """
         self.message = message
-        self.code = code
+        self.status_code = code
         super().__init__(f"TokenException {code}: {message}")
 
     def __str__(self):
@@ -19,4 +19,4 @@ class TokenException(Exception):
         String representation of the exception.
         :return: The error message.
         """
-        return f"[Error {self.code}] {self.message}"
+        return f"[Error {self.status_code}] {self.message}"

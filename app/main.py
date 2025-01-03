@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.middleware import tokenMiddleware
+from app.routes import tokenRoutes
 from app.routes import userRoutes
 import uvicorn
 from app.appConstants import SERVER_CONFIG
@@ -14,14 +16,18 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Replace with specific origins in production
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    # Include routers
-    app.include_router(userRoutes, prefix="/users", tags=["Users"])
+    #Middlewares
+    app.add_middleware(tokenMiddleware)
+
+    #Routes
+    app.include_router(userRoutes)
+    app.include_router(tokenRoutes)
 
     return app
 
