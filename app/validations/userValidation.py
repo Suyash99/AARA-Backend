@@ -1,30 +1,32 @@
-from pydantic import BaseModel, EmailStr, field_validator, root_validator, model_validator
-from app.models.User import User
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 from app.repository.userRepository import UserRepository
 from app.exceptions.userException import UserExceptionError
 from app.appConstants import USER_EXCEPTION_ERRORS
 
-class UserValidation(User, BaseModel):
+class UserValidation(BaseModel):
+    username: str
     email: EmailStr
+    user_code: str
 
     @model_validator(mode="before")
-    def create_user_checks(self, data:User) -> User:
-        UserValidation.validate_username(self, data.username)
-        UserValidation.validate_unique_email(self, data.email)
-        UserValidation.validate_unique_user_code(self, data.user_code)
+    @classmethod
+    def create_user_checks(cls, data):
+        cls.validate_username(data.get("username"))
+        cls.validate_unique_email(data.get("email"), data.get("repository"))
+        cls.validate_unique_user_code(data.get("user_code"), data.get("repository"))
         return data
 
-    @field_validator("username")
-    def validate_username(self, username: str):
+    @classmethod
+    def validate_username(cls, username: str):
         if len(username) < 3:
             raise UserExceptionError(USER_EXCEPTION_ERRORS['VALID_USERNAME'], "username")
 
-    @field_validator("email")
-    def validate_unique_email(self, value):
-        if UserRepository.query_in_db(self, "email = ?", [value]).build().count() > 0:
+    @classmethod
+    def validate_unique_email(cls, email: str, repository: UserRepository):
+        if repository.query_in_db("email = ?", [email]).build().count() > 0:
             raise UserExceptionError(USER_EXCEPTION_ERRORS['VALID_UNIQUE_EMAIL'], "email")
 
-    @field_validator("user_code")
-    def validate_unique_user_code(self, value):
-        if UserRepository.query_in_db(self, "user_code = ?", [value]).build().count() > 0:
+    @classmethod
+    def validate_unique_user_code(cls, user_code: str, repository: UserRepository):
+        if repository.query_in_db("user_code = ?", [user_code]).build().count() > 0:
             raise UserExceptionError(USER_EXCEPTION_ERRORS['VALID_UNIQUE_USER_CODE'], "user_code")

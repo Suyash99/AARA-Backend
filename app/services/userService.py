@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pathlib import Path
+import base64
 from app.exceptions.userException import UserExceptionError
 from app.mapper.userMapper import UserMapper
 from app.mapper.userResponse import UserResponse
@@ -8,11 +8,11 @@ from app.repository.userRepository import UserRepository
 from app.utils.passwordUtils import PasswordUtils
 from app.utils.generateCodeForId import GenerateCodeForId
 from app.utils.storeImageUtils import save_image
+from app.validations.userValidation import UserValidation
 import logging
 
+
 logger = logging.getLogger("main")
-UPLOAD_DIR = Path("../uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
 
 class UserService:
     def __init__(self, user_repository: UserRepository):
@@ -22,13 +22,13 @@ class UserService:
         """
         self.user_repository = user_repository
 
-    def create_user(self, user_request: UserRequest, filebytearray: Optional[bytearray]) -> str:
-        profile_image_bytes = None
+    def create_user(self, user_request: UserRequest, file_byte_array: Optional[bytearray]) -> str:
+        profile_image_bytes = base64.b64encode(file_byte_array).decode('utf-8') if file_byte_array else ''
         user_code = GenerateCodeForId.generate_random_code(6)
-        if filebytearray:
+        if file_byte_array:
             logger.info("User has profile photo, will ensure create img flow!")
-            filename = f'{user_code}_{user_request.username}'
-            profile_image_bytes = save_image(filename, filebytearray)
+            filename = f'{user_code}_{user_request.username}.jpg'
+            save_image(filename, file_byte_array)
 
         user_request.user_photo_bytes = profile_image_bytes
         user_request.user_code = user_code
@@ -54,8 +54,13 @@ class UserService:
         :return: UserResponse object of the newly created user.
         """
         user = UserMapper.to_user(user_request)
+
+        #User validation will go here!
+
+
+
         created_user = self.user_repository.create_user(user)
-        return UserMapper.to_user_response(created_user).model_validate(created_user)
+        return UserMapper.to_user_response(created_user)
 
     def get_user_by_user_code(self, user_code: str) -> UserResponse:
         """

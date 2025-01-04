@@ -1,5 +1,5 @@
 from datetime import datetime
-from app.models.User import User
+from app.models.user import User
 from app.mapper.userRequest import UserRequest
 from app.mapper.userResponse import UserResponse
 from app.utils.passwordUtils import PasswordUtils
@@ -12,7 +12,7 @@ class UserMapper:
 
         hashed_password = PasswordUtils.hash_password(request.password)
         # If updated_at is not provided, use the current timestamp
-        updated_at = request.updated_at if request.updated_at else datetime
+        updated_at = request.updated_at if request.updated_at else datetime.now()
 
         return User(
             username=request.username,
@@ -20,8 +20,9 @@ class UserMapper:
             password=hashed_password,
             user_code=request.user_code,
             colour_code=request.colour_code,
-            created_at=datetime,
-            updated_at=updated_at
+            created_at=updated_at,
+            updated_at=updated_at,
+            user_photo_bytes=request.user_photo_bytes
         )
 
     @staticmethod
@@ -33,6 +34,7 @@ class UserMapper:
             id=user.id,
             user_code=user.user_code,
             colour_code=user.colour_code,
+            user_photo_bytes=user.user_photo_bytes,
             username=user.username,
             email=user.email,
             password=user.password,

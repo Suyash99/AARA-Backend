@@ -19,4 +19,4 @@ class TokenException(Exception):
         String representation of the exception.
         :return: The error message.
         """
-        return f"[Error {self.status_code}] {self.message}"
+        return f"Error- {self.message}, code-  {self.status_code}"

@@ -1,4 +1,4 @@
-from app.models import User
+from app.models.user import User
 from objectbox import Box, query
 from typing import Optional, List
 
@@ -8,11 +8,12 @@ class UserRepository:
 
     def create_user(self, user_data: User) -> User:
         """Create a new user."""
-        return self.box.put(user_data)
+        self.box.put(user_data)
+        return user_data
 
     def get_user_by_user_code(self, user_code: str) -> Optional[User]:
-        """Retrieve a user by ID."""
-        db_query = self.query_in_db("user_code = ?", [user_code]).build()
+        """Retrieve a user by user_code."""
+        db_query = self.query_in_db("user_code", user_code).build()
         users = db_query.find()
         return users[0] if users else None
 
@@ -22,26 +23,34 @@ class UserRepository:
 
     def get_user_by_email(self, email: str) -> Optional[User]:
         """Retrieve a user by email."""
-        db_query = self.query_in_db("email = ?", [email]).build()
+        db_query = self.query_in_db("email", email).build()
         users = db_query.find()
         return users[0] if users else None
 
-    def update_user(self, user_code: str) -> bool:
+    def update_user(self, user_code: str, updated_user_data: User) -> bool:
         """Update a user's details."""
-        db_query = self.query_in_db("user_code = ?", [user_code]).build()
+        db_query = self.query_in_db("user_code", user_code).build()
         user = db_query.find()
-        return self.box.put(user) is not None
+        if user:
+            # Example: Update fields of found user with `updated_user_data`
+            existing_user = user[0]
+            existing_user.username = updated_user_data.username
+            existing_user.email = updated_user_data.email
+            self.box.put(existing_user)  # Save updated user
+            return True
+        return False
 
     def delete_user(self, user_code: str) -> bool:
         """Delete a user."""
-        return self.box.remove(user_code)
+        user = self.get_user_by_user_code(user_code)
+        if user:
+            self.box.remove(user)  # Remove the user entity
+            return True
+        return False
 
-    def query_in_db(self, field_names:str, field_values:List[str]) -> query:
-        return self.box.query(field_names, field_values)
+    def query_in_db(self, field_name: str, field_value: str) -> query:
+        return self.box.query(User[field_name].equals(field_value))
 
     def get_all_users(self) -> List[User]:
-        """
-        Fetch all users using the repository.
-        :return: List of User entities.
-        """
+        """Fetch all users."""
         return self.box.get_all()

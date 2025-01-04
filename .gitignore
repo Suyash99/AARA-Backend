@@ -44,3 +44,8 @@ build/
 
 # Pydantic models and schemas if they are generated
 *.pydantic/
+
+#Object box creates new folder and json for operation. To avoid conflict, do not push,
+#NOTE: If required uncomment but be vary this will impact the objectbox sync across systems
+*objectbox
+objectbox-model.json

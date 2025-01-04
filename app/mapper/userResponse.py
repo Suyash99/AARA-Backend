@@ -1,15 +1,14 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional
 
 class UserResponse(BaseModel):
+    id: int
     username: str
     user_code: str
     email: EmailStr
     password: str
     colour_code: str
-    user_photo: Optional[bytes] = None
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}
+    user_photo_bytes: str
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: Optional[datetime]
