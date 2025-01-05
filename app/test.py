@@ -2,9 +2,8 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.backends import default_backend
 import base64
-from appConstants import AES_ENCRY
-import os
-from cryptography.hazmat.primitives import hashes
+from app.utils.constants import AES_ENCRY
+
 
 def encrypt_aes_ecb(plain_text: str, key: bytes) -> str:
     """

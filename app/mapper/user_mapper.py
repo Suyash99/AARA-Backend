@@ -1,8 +1,8 @@
 from datetime import datetime
 from app.models.user import User
-from app.mapper.userRequest import UserRequest
-from app.mapper.userResponse import UserResponse
-from app.utils.passwordUtils import PasswordUtils
+from app.mapper.user_request import UserRequest
+from app.mapper.user_response import UserResponse
+from app.utils.crypto_utils import PasswordUtils
 import time
 
 class UserMapper:
@@ -33,14 +33,13 @@ class UserMapper:
         if user is None:
             return None
 
+        # image = getBytes(user.image_uri)
+
         return UserResponse(
-                id=user.id,
-                user_code=user.user_code,
-                colour_code=user.colour_code,
-                user_photo_bytes=user.user_photo_bytes,
+                code=user.code,
+                name=user.name,
+                about=user.about,
+                color=user.color,
+                image=None,
                 username=user.username,
-                email=user.email,
-                password=user.password,
-                created_at=user.created_at,
-                updated_at=user.updated_at
             )

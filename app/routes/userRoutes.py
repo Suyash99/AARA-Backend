@@ -1,34 +1,36 @@
-from app.services.userService import UserService
-from app.mapper.userRequest import UserRequest
+from app.mapper.serverResponseMapper import ServerResponse
+from app.services.user_service import UserService
+from app.mapper.user_request import UserRequest
 from app.models.database import get_box
 from app.exceptions.userException import UserExceptionError
 from app.repository.userRepository import UserRepository
 from objectbox import Box
 from fastapi import APIRouter, HTTPException, status, File, UploadFile, Form, Depends
 from typing import  Optional
-from pydantic import EmailStr
-from app.utils.operationHandler import handle_operation
+from functools import partial
+
+from app.utils.constants import APP_ID, API_VERSION
+from app.utils.operation_handler import handle_operation
 import logging
 
 logger = logging.getLogger('main')
 
 router = APIRouter(
-    prefix="/api/v1/user",
-    tags=["Users"]
+    prefix=f"/{APP_ID}/{API_VERSION}/user",
+    tags=["Users"],
 )
 
-def get_user_service(box: Box = Depends(get_box)) -> UserService:
+def get_service(box: Box = Depends(get_box)) -> UserService:
     user_repository = UserRepository(box=box)
     return UserService(user_repository)
 
 @router.post("/", status_code=status.HTTP_200_OK)
-async def create_user(
+async def create(
     username: str = Form(...),
-    email: EmailStr = Form(...),
     password: str = Form(...),
     colour_code: str = Form(...),
     user_photo: Optional[UploadFile] = File(None),
-    user_service: UserService = Depends(get_user_service),
+    user_service: UserService = Depends(get_service),
 ):
     """
     Create a new user.
@@ -63,7 +65,7 @@ async def create_user(
 
 
 @router.get("/{user_code}")
-def get_user(user_code: str, user_service: UserService = Depends(get_user_service)):
+def get(user_code: str, user_service: UserService = Depends(get_service)):
     """
     Retrieve a user by ID.
     """
@@ -71,23 +73,25 @@ def get_user(user_code: str, user_service: UserService = Depends(get_user_servic
     return handle_operation(user)
 
 @router.get("/")
-def get_all_users(user_service: UserService = Depends(get_user_service)):
+def get_all(user_service: UserService = Depends(get_service)):
     """
     Retrieve all users.
     """
     user = user_service.get_all_users()
     return handle_operation(user)
 
-@router.put("/{user_code}")
-def update_user(user_code: str, user_request: UserRequest, user_service: UserService = Depends(get_user_service)):
+@router.put(path="/", response_model=ServerResponse)
+def update(
+        request: str = Form(...),
+        image: Optional[UploadFile] = File(None),
+        service: UserService = Depends(get_service)):
     """
     Update an existing user.
     """
-    user = user_service.update_user(user_code, user_request)
-    return handle_operation(user)
+    return handle_operation(partial(service.update_user, request, image))
 
 @router.delete("/{user_code}")
-def delete_user(user_code: str, user_service: UserService = Depends(get_user_service)):
+def delete(user_code: str, user_service: UserService = Depends(get_service)):
     """
     Delete a user by user_code.
     """

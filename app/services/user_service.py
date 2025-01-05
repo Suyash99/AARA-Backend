@@ -1,18 +1,20 @@
-from typing import List, Optional
 import base64
-from app.exceptions.userException import UserExceptionError
-from app.mapper.userMapper import UserMapper
-from app.mapper.userResponse import UserResponse
-from app.mapper.userRequest import UserRequest
-from app.repository.userRepository import UserRepository
-from app.utils.passwordUtils import PasswordUtils
-from app.utils.generateCodeForId import GenerateCodeForId
-from app.utils.imageUtils import save_image
-from app.utils.imageUtils import delete_image
-from app.validations.userValidation import UserValidation
-import time
 import logging
+import time
+from typing import List, Optional
 
+from fastapi import UploadFile
+
+from app.exceptions.response_exception import ResponseException
+from app.exceptions.userException import UserExceptionError
+from app.mapper.user_mapper import UserMapper
+from app.mapper.user_request import UserRequest
+from app.mapper.user_response import UserResponse
+from app.repository.userRepository import UserRepository
+from app.utils.generateCodeForId import GenerateCodeForId
+from app.utils.imageUtils import delete_image
+from app.utils.imageUtils import save_image
+from app.utils.crypto_utils import PasswordUtils
 
 logger = logging.getLogger("main")
 
@@ -99,23 +101,26 @@ class UserService:
             raise UserExceptionError(f"User with email {email} not found", "email")
         return UserMapper.to_user_response(user)
 
-    def update_user(self, user_code: str, user_request: UserRequest) -> UserResponse:
-        """
-        Update an existing user's details.
-        :param user_code: The user_code of the user to update.
-        :param user_request: UserRequest object with updated details.
-        :return: UserResponse object of the updated user.
-        :raises UserNotFoundException: If the user is not found.
-        """
-        user = self.user_repository.get_user_by_user_code(user_code)
-        if not user:
-            raise UserExceptionError(f"User with ID {user_code} not found", "user_code")
+    async def update_user(self, request: str, image: Optional[UploadFile]) -> UserResponse:
+        request = UserRequest.parse_raw(request)
 
-        user.username = user_request.username
-        user.email = user_request.email
-        user.user_code = user_request.user_code
-        user.colour_code = user_request.colour_code
+        if not request.code:
+            raise ResponseException("User code is empty", 417)
+
+        user = self.user_repository.get_user_by_user_code(request.code)
+
+        if not user:
+            raise ResponseException(f"User with code {user.code} not found", 404)
+
+        image_bytes = bytearray(await image.read()) if image else None
+        # image_uri = save image bytes into file and get uri (path)
+
+        user.name = request.name
+        user.about = request.about
+        user.color = request.color
+        # user.image_uri = image_uri
         user.updated_at = round(time.time() * 1000)
+        user.updated_by = user.username
 
         self.user_repository.update_user(user)
         return UserMapper.to_user_response(user)

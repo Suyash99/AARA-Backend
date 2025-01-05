@@ -33,18 +33,8 @@ class UserRepository:
         users = db_query.find()
         return users[0] if users else None
 
-    def update_user(self,updated_user_data: User) -> bool:
-        """Update a user's details."""
-        db_query = self.box.query(User.user_code.equals(updated_user_data.user_code)).build()
-        user = db_query.find()
-        if user:
-            # Example: Update fields of found user with `updated_user_data`
-            existing_user = user[0]
-            existing_user.username = updated_user_data.username
-            existing_user.email = updated_user_data.email
-            self.box.put(existing_user)  # Save updated user
-            return True
-        return False
+    def update_user(self, user: User):
+        self.box.put(user)
 
     def delete_user(self, user_code: str) -> bool:
         """Delete a user."""
