@@ -4,8 +4,12 @@ SERVER_CONFIG = {
     'SERVER_PORT': 8000,
 }
 
+#Encry Keys
 AES_ENCRY = {
     'key': b'B9CF1133E770E069695ZX8E6F4F0B9B5'
+}
+HMAC_ENCRY = {
+    'key': 'Some random text goes here!'
 }
 
 #User exception message

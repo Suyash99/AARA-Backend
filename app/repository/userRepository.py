@@ -13,7 +13,13 @@ class UserRepository:
 
     def get_user_by_user_code(self, user_code: str) -> Optional[User]:
         """Retrieve a user by user_code."""
-        db_query = self.query_in_db("user_code", user_code).build()
+        db_query = self.box.query(User.user_code.equals(user_code)).build()
+        users = db_query.find()
+        return users[0] if users else None
+
+    def get_user_by_user_name(self, user_name: str) -> Optional[User]:
+        """Retrieve a user by user_code."""
+        db_query = self.box.query(User.username.equals(user_name)).build()
         users = db_query.find()
         return users[0] if users else None
 
@@ -23,13 +29,13 @@ class UserRepository:
 
     def get_user_by_email(self, email: str) -> Optional[User]:
         """Retrieve a user by email."""
-        db_query = self.query_in_db("email", email).build()
+        db_query = self.box.query(User.email.equals(email)).build()
         users = db_query.find()
         return users[0] if users else None
 
-    def update_user(self, user_code: str, updated_user_data: User) -> bool:
+    def update_user(self,updated_user_data: User) -> bool:
         """Update a user's details."""
-        db_query = self.query_in_db("user_code", user_code).build()
+        db_query = self.box.query(User.user_code.equals(updated_user_data.user_code)).build()
         user = db_query.find()
         if user:
             # Example: Update fields of found user with `updated_user_data`
@@ -49,7 +55,7 @@ class UserRepository:
         return False
 
     def query_in_db(self, field_name: str, field_value: str) -> query:
-        return self.box.query(User[field_name].equals(field_value))
+        return self.box.query(User.user_code.equals(field_value))
 
     def get_all_users(self) -> List[User]:
         """Fetch all users."""

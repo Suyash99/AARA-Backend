@@ -13,7 +13,12 @@ class TokenInterceptorMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
         try:
             # Skip token check for create user flow
-            if not (request.url.path.rstrip("/") == "/api/v1/user" and request.method == "POST"):
+            if not (
+                    (request.url.path.rstrip('/') == '/api/v1/token' and
+                    request.method == 'GET') or
+                    (request.url.path.rstrip("/") == "/api/v1/user" and
+                    request.method == "POST")
+            ):
                 token = request.headers.get("Authorization")
                 if not token:
                     raise TokenException("Missing token in request", 401)

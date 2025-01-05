@@ -1,7 +1,5 @@
-from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime
+from pydantic import BaseModel, EmailStr
 from typing import Optional
-
 class UserResponse(BaseModel):
     id: int
     username: str
@@ -10,5 +8,5 @@ class UserResponse(BaseModel):
     password: str
     colour_code: str
     user_photo_bytes: str
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: Optional[datetime]
+    created_at: Optional[int]
+    updated_at: Optional[int]

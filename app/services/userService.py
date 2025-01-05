@@ -7,8 +7,10 @@ from app.mapper.userRequest import UserRequest
 from app.repository.userRepository import UserRepository
 from app.utils.passwordUtils import PasswordUtils
 from app.utils.generateCodeForId import GenerateCodeForId
-from app.utils.storeImageUtils import save_image
+from app.utils.imageUtils import save_image
+from app.utils.imageUtils import delete_image
 from app.validations.userValidation import UserValidation
+import time
 import logging
 
 
@@ -27,7 +29,7 @@ class UserService:
         user_code = GenerateCodeForId.generate_random_code(6)
         if file_byte_array:
             logger.info("User has profile photo, will ensure create img flow!")
-            filename = f'{user_code}_{user_request.username}.jpg'
+            filename = f"{user_code}_{user_request.username}.jpg"
             save_image(filename, file_byte_array)
 
         user_request.user_photo_bytes = profile_image_bytes
@@ -36,14 +38,13 @@ class UserService:
         return PasswordUtils.generate_hashed_token(user)
 
     def reverify_user_and_generate_token(self,user_payload:dict) -> str:
-        user_code = user_payload['user_code']
-        user = self.get_user_by_user_code(user_code)
+        username = user_payload['username']
+        user = self.get_user_by_user_name(username)
 
         is_pass_verified = PasswordUtils.verify_password(user_payload['password'],user.password)
-
         if not is_pass_verified:
             logger.error('Tried regenerating password, password does not match in req and db!')
-            raise UserExceptionError('Password does not match!')
+            raise UserExceptionError('Password does not match, cannot regenerate token!')
 
         return PasswordUtils.generate_hashed_token(user)
 
@@ -71,8 +72,20 @@ class UserService:
         """
         user = self.user_repository.get_user_by_user_code(user_code)
         if not user:
-            raise UserExceptionError(f"User with ID {user_code} not found")
-        return UserResponse.model_validate(user)
+            raise UserExceptionError(f"User with usercode {user_code} not found")
+        return UserMapper.to_user_response(user)
+
+    def get_user_by_user_name(self, user_name: str) -> UserResponse:
+        """
+        Retrieve a user by their ID.
+        :param user_name: The ID of the user.
+        :return: UserResponse object if found.
+        :raises UserNotFoundException: If the user is not found.
+        """
+        user = self.user_repository.get_user_by_user_name(user_name)
+        if not user:
+            raise UserExceptionError(f"User with username {user_name} not found")
+        return UserMapper.to_user_response(user)
 
     def get_user_by_email(self, email: str) -> UserResponse:
         """
@@ -84,7 +97,7 @@ class UserService:
         user = self.user_repository.get_user_by_email(email)
         if not user:
             raise UserExceptionError(f"User with email {email} not found", "email")
-        return UserResponse.model_validate(user)
+        return UserMapper.to_user_response(user)
 
     def update_user(self, user_code: str, user_request: UserRequest) -> UserResponse:
         """
@@ -102,10 +115,10 @@ class UserService:
         user.email = user_request.email
         user.user_code = user_request.user_code
         user.colour_code = user_request.colour_code
-        user.updated_at = None
+        user.updated_at = round(time.time() * 1000)
 
         self.user_repository.update_user(user)
-        return UserResponse.model_validate(user)
+        return UserMapper.to_user_response(user)
 
     def delete_user(self, user_code: str) -> bool:
         """
@@ -117,7 +130,15 @@ class UserService:
         user = self.user_repository.get_user_by_user_code(user_code)
         if not user:
             raise UserExceptionError(f"User with ID {user_code} not found", "user_code")
-        return self.user_repository.delete_user(user_code)
+        is_user_deleted = True
+
+        if is_user_deleted:
+            logger.info('User deleted will try to delete profile photo!')
+
+            delete_image(f"{user.user_code}_{user.username}.jpg")
+
+
+        return is_user_deleted
 
     def get_all_users(self) -> List[UserResponse]:
         """
@@ -125,5 +146,4 @@ class UserService:
         :return: List of UserResponse objects.
         """
         users = self.user_repository.get_all_users()
-        return [UserResponse.model_validate(user) for user in users]
-
+        return [UserMapper.to_user_response(user) for user in users]

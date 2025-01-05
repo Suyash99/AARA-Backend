@@ -1,13 +1,11 @@
 from app.mapper.userResponse import UserResponse
 from app.exceptions.tokenException import TokenException
-from typing import Optional
 from datetime import datetime
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding
 from app.appConstants import AES_ENCRY
 import bcrypt
-import hashlib
 import base64
 import time
 import json
@@ -37,36 +35,53 @@ class PasswordUtils:
         return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
 
     @staticmethod
-    def decrypt_aes_encoded_text(ecryp_user_detail:str) -> str:
+    def decrypt_aes_encoded_text(encrypted_text: str) -> str:
         try:
-            decryptor = Cipher(algorithms.AES(AES_ENCRY['key']), modes.ECB(), backend=default_backend()).decryptor()
-            decrypted_data = decryptor.update(ecryp_user_detail) + decryptor.finalize()
+            # Decode the Base64 encoded ciphertext
+            ciphertext = base64.b64decode(encrypted_text)
 
+            # Create AES cipher in ECB mode
+            cipher = Cipher(algorithms.AES(AES_ENCRY['key']), modes.ECB(), backend=default_backend())
+            decryptor = cipher.decryptor()
+
+            # Decrypt the ciphertext
+            decrypted_padded_data = decryptor.update(ciphertext) + decryptor.finalize()
+
+            # Remove padding
             unpadder = padding.PKCS7(128).unpadder()
-            unpadded_data = unpadder.update(decrypted_data)
-            unpadded_data += unpadder.finalize()
-            return unpadded_data.decode('utf-8')
+            decrypted_data = unpadder.update(decrypted_padded_data) + unpadder.finalize()
+
+            # Return the decrypted (unpadded) data as a string
+            return decrypted_data.decode('utf-8')
+
         except Exception as e:
-            raise TokenException(f'Error refreshing token', 400)
+            raise TokenException(f"Error decrypting data: {e}", 400)
 
     @staticmethod
     def generate_hashed_token(user_response: UserResponse) -> str:
         try:
             # Convert UserResponse object to a JSON string
             user_data = json.loads(user_response.model_dump_json())
-            user_data['expiry_time'] = (time.time() * 1000) + (1 * 7 * 24 * 60 * 60 * 1000)  # Expire in 1 week
-            token_payload = json.dumps(user_data)
+            token_payload = {key: value for key, value in user_data.items() if key != 'user_photo_bytes'} #Exclude from token
 
-            # Create a SHA256 hash of the serialized data
-            hash_object = hashlib.sha256(token_payload.encode('utf-8'))
+            token_payload['expiry_time'] = (time.time() * 1000) + (1 * 7 * 24 * 60 * 60 * 1000)   # Expire in 1 week
 
-            # Encode the hash in Base64 for a URL-safe token
-            token = base64.urlsafe_b64encode(hash_object.digest()).decode('utf-8')
+            plaintext = json.dumps(token_payload).encode("utf-8")
 
-            return token
+            # Add padding
+            padder = padding.PKCS7(128).padder()
+            padded_data = padder.update(plaintext) + padder.finalize()
+
+            # Encrypt
+            cipher = Cipher(algorithms.AES(AES_ENCRY['key']), modes.ECB(), backend=default_backend())
+            encryptor = cipher.encryptor()
+            ciphertext = encryptor.update(padded_data) + encryptor.finalize()
+
+            # Base64 encode the ciphertext
+            return base64.urlsafe_b64encode(ciphertext).decode("utf-8")
         except Exception as e:
             logger.error(f"error while generating hash:: {e}")
-            raise TokenException(f'Error while generating hash- {e}', 400)
+            raise TokenException(f"Error while generating hash- {e}", 400)
 
     @staticmethod
     def verify_hashed_token(token: str) -> None:
@@ -75,9 +90,19 @@ class PasswordUtils:
         :param token: The token to verify.
         """
         try:
-            # Decode the Base64 token
-            decoded_hash = base64.urlsafe_b64decode(token.encode('utf-8'))
-            token_payload = json.loads(decoded_hash.decode("utf-8"))
+            ciphertext = base64.urlsafe_b64decode(token)
+
+            # Decrypt
+            cipher = Cipher(algorithms.AES(AES_ENCRY['key']), modes.ECB(), backend=default_backend())
+            decryptor = cipher.decryptor()
+            decrypted_padded_data = decryptor.update(ciphertext) + decryptor.finalize()
+
+            # Remove padding
+            unpadder = padding.PKCS7(128).unpadder()
+            decrypted_data = unpadder.update(decrypted_padded_data) + unpadder.finalize()
+
+            # Convert JSON string back to dict
+            token_payload = json.loads(decrypted_data.decode("utf-8"))
 
             # Extract expiry time
             expiry_time = token_payload.get("expiry_time")
@@ -88,7 +113,7 @@ class PasswordUtils:
             # Check if the token is expired
             current_time_ms = time.time() * 1000
             if current_time_ms > expiry_time:
-                readable_date = datetime.fromtimestamp(expiry_time/1000).isoformat(sep=' ', timespec='seconds')
+                readable_date = datetime.fromtimestamp(expiry_time / 1000).isoformat(sep=" ", timespec="seconds")
                 logger.error(f"Token expired at {readable_date}, will return error")
                 raise TokenException("Token has expired!", 410)
         except Exception as e:

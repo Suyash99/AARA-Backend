@@ -50,11 +50,9 @@ async def create_user(
         file_byte_array = bytearray(await user_photo.read()) if user_photo else None
 
         # Call user service
-        response = user_service.create_user(user_request, file_byte_array)
+        token = user_service.create_user(user_request, file_byte_array)
 
-        # Construct payload
-        response_payload = {"token": response}
-        return handle_operation(response_payload)
+        return handle_operation(token)
 
     except UserExceptionError as e:
         logger.error(f"User Exception: {e}")
@@ -94,5 +92,6 @@ def delete_user(user_code: str, user_service: UserService = Depends(get_user_ser
     Delete a user by user_code.
     """
     is_user_deleted = user_service.delete_user(user_code)
+
     response_payload = {'user_deleted':is_user_deleted}
     return handle_operation(response_payload)

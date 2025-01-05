@@ -1,6 +1,6 @@
-from datetime import datetime
-from objectbox import Id, Date
+from objectbox import Id, Int64
+from typing import Optional
 class BaseModel:
     id = Id
-    created_at = Date(py_type=datetime)
-    updated_at = Date(py_type=datetime)
+    created_at = Int64
+    updated_at = Int64
