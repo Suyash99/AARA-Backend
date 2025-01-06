@@ -1,45 +1,53 @@
-from datetime import datetime
 from app.models.user import User
 from app.mapper.user_request import UserRequest
-from app.mapper.user_response import UserResponse
+from app.mapper.user_response import UserResponse, UserResponseV2
 from app.utils.crypto_utils import PasswordUtils
+from typing import Optional
 import time
 
 class UserMapper:
     @staticmethod
-    def to_user(request: UserRequest):
+    def to_user(request: UserRequest, image_url:Optional[str]):
         if request is None:
             return None
 
         hashed_password = PasswordUtils.hash_password(request.password)
 
         # If updated_at is not provided, use the current timestamp
-        created_at = request.created_at if request.created_at else round(time.time() * 1000)
-        updated_at = request.updated_at if request.updated_at else round(time.time() * 1000)
+        created_at = round(time.time() * 1000)
+        updated_at = round(time.time() * 1000)
 
         return User(
+            name=request.name,
             username=request.username,
-            email=request.email,
+            about=request.about,
             password=hashed_password,
-            user_code=request.user_code,
-            colour_code=request.colour_code,
+            code=request.code,
+            color=request.color,
+            created_by=request.code,
+            updated_by=request.code,
             created_at=created_at,
             updated_at=updated_at,
-            user_photo_bytes=request.user_photo_bytes
+            image_uri=image_url
         )
 
     @staticmethod
-    def to_user_response(user: User):
+    def to_user_response(user: User, include_pass:bool=False):
         if user is None:
             return None
 
-        # image = getBytes(user.image_uri)
-
-        return UserResponse(
+        if not include_pass:
+            return UserResponse(
+                    code=user.code,
+                    name=user.name,
+                    about=user.about,
+                    color=user.color
+            )
+        else:
+            return UserResponseV2(
                 code=user.code,
                 name=user.name,
                 about=user.about,
                 color=user.color,
-                image=None,
-                username=user.username,
+                password=user.password
             )

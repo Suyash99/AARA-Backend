@@ -11,9 +11,9 @@ class UserRepository:
         self.box.put(user_data)
         return user_data
 
-    def get_user_by_user_code(self, user_code: str) -> Optional[User]:
+    def get_user_by_code(self, code: str) -> Optional[User]:
         """Retrieve a user by user_code."""
-        db_query = self.box.query(User.user_code.equals(user_code)).build()
+        db_query = self.box.query(User.code.equals(code)).build()
         users = db_query.find()
         return users[0] if users else None
 
@@ -27,25 +27,20 @@ class UserRepository:
         """Retrieve a user by ID."""
         return self.box.get(id)
 
-    def get_user_by_email(self, email: str) -> Optional[User]:
-        """Retrieve a user by email."""
-        db_query = self.box.query(User.email.equals(email)).build()
-        users = db_query.find()
-        return users[0] if users else None
-
     def update_user(self, user: User):
         self.box.put(user)
 
-    def delete_user(self, user_code: str) -> bool:
+    def delete_user(self, code: str) -> bool:
         """Delete a user."""
-        user = self.get_user_by_user_code(user_code)
+        user = self.get_user_by_code(code)
         if user:
             self.box.remove(user)  # Remove the user entity
             return True
         return False
 
+    @DeprecationWarning
     def query_in_db(self, field_name: str, field_value: str) -> query:
-        return self.box.query(User.user_code.equals(field_value))
+        return self.box.query(User.code.equals(field_value))
 
     def get_all_users(self) -> List[User]:
         """Fetch all users."""

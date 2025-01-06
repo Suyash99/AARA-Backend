@@ -10,8 +10,7 @@ T = TypeVar('T')
 
 logger = logging.getLogger("main")
 
-
-def handle_operation(operation):
+def handle_operation(operation: T):
     try:
         result = operation()
         return ServerResponse(

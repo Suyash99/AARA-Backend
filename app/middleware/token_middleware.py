@@ -3,6 +3,7 @@ import logging
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import JSONResponse
+from app.utils.constants import APP_ID, API_VERSION
 
 from app.exceptions.tokenException import TokenException
 from app.utils.crypto_utils import PasswordUtils
@@ -15,10 +16,10 @@ class TokenInterceptorMiddleware(BaseHTTPMiddleware):
         try:
             # Skip token check for create user flow
             if not (
-                    (request.url.path.rstrip('/') == '/api/v1/token' and
-                    request.method == 'GET') or
-                    (request.url.path.rstrip("/") == "/api/v1/user" and
-                    request.method == "POST")
+                    (request.url.path.rstrip('/') == f"/{APP_ID}/{API_VERSION}/user" and
+                    request.method == 'POST') or
+                    (request.url.path.rstrip("/") == f"/{APP_ID}/{API_VERSION}/user/re-login" and
+                    request.method == "PUT")
             ):
                 token = request.headers.get("Authorization")
                 if not token:

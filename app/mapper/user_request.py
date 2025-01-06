@@ -1,11 +1,10 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class UserRequest(BaseModel):
     code: str
-
-    username: str
-    password: str
-
     name: str
-    color: str
-    about: str
+    username: Optional[str]
+    password: Optional[str]
+    color: Optional[str]
+    about: Optional[str]

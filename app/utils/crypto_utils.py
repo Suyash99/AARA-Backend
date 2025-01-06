@@ -62,7 +62,7 @@ class PasswordUtils:
         try:
             # Convert UserResponse object to a JSON string
             user_data = json.loads(user_response.model_dump_json())
-            token_payload = {key: value for key, value in user_data.items() if key != 'user_photo_bytes'} #Exclude from token
+            token_payload = {key: value for key, value in user_data.items() if key != 'image'} #Exclude from token
 
             token_payload['expiry_time'] = (time.time() * 1000) + (1 * 7 * 24 * 60 * 60 * 1000)   # Expire in 1 week
 

@@ -10,6 +10,7 @@ class User(BaseModel):
     password = String()
 
     # Details
+    code = String()
     name = String()
     about = String()
     color = String()

@@ -1,5 +1,6 @@
 import logging
 import os
+from app.utils.constants import UPLOAD_DIR
 
 logger = logging.getLogger('main')
 
@@ -15,7 +16,6 @@ def save_image(file_bytes: bytes, file_name: str, directory: str) -> str | None:
 
 def delete_image(image_path: str):
     try:
-        print(f"path- {UPLOAD_DIR / image_path}")
         if os.path.exists(UPLOAD_DIR / image_path):
             os.remove(image_path)  # Delete the file
             logger.info(f"Image {image_path} deleted successfully.")
@@ -23,4 +23,4 @@ def delete_image(image_path: str):
             logger.info(f"The file {image_path} does not exist.")
     except Exception as e:
         logger.error(f"Error occurred while deleting the image: {str(e)}")
-        raise Exception(f"Error occured while deleting the image: {str(e)}")
+        raise Exception(f"Error occurred while deleting the image: {str(e)}")
