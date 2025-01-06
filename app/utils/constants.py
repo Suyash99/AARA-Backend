@@ -2,6 +2,9 @@
 APP_ID = 'aara'
 APP_NAME = 'AARA'
 
+# Uploads base folder
+UPLOAD_DIR = 'uploads'
+
 # API Info
 API_VERSION = 'v1'
 

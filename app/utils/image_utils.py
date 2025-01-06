@@ -1,18 +1,16 @@
-from pathlib import Path
-import os
 import logging
+import os
 
 logger = logging.getLogger('main')
 
-UPLOAD_DIR = Path("../uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
-
-def save_image(filename: str, filebytes: bytes) -> bytes:
-    file_path = UPLOAD_DIR / filename
-    with file_path.open("wb") as buffer:
-        buffer.write(filebytes)
-
-    return file_path.read_bytes()
+def save_image(file_bytes: bytes, file_name: str, directory: str) -> str | None:
+    if file_bytes is None:
+        return None
+    os.makedirs(directory, exist_ok=True)
+    file_path = os.path.join(directory, f"{file_name}.jpg")
+    with open(file_path, "wb") as file:
+        file.write(file_bytes)
+        return file_path
 
 
 def delete_image(image_path: str):

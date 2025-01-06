@@ -11,10 +11,11 @@ from app.mapper.user_mapper import UserMapper
 from app.mapper.user_request import UserRequest
 from app.mapper.user_response import UserResponse
 from app.repository.userRepository import UserRepository
-from app.utils.generateCodeForId import GenerateCodeForId
-from app.utils.imageUtils import delete_image
-from app.utils.imageUtils import save_image
+from app.utils.constants import UPLOAD_DIR
 from app.utils.crypto_utils import PasswordUtils
+from app.utils.generateCodeForId import GenerateCodeForId
+from app.utils.image_utils import delete_image
+from app.utils.image_utils import save_image
 
 logger = logging.getLogger("main")
 
@@ -102,23 +103,25 @@ class UserService:
         return UserMapper.to_user_response(user)
 
     async def update_user(self, request: str, image: Optional[UploadFile]) -> UserResponse:
-        request = UserRequest.parse_raw(request)
+        try :
+            request = UserRequest.parse_raw(request)
+        except Exception as e:
+            raise ResponseException("Unable to parse request", 422, e)
 
         if not request.code:
             raise ResponseException("User code is empty", 417)
 
         user = self.user_repository.get_user_by_user_code(request.code)
-
         if not user:
             raise ResponseException(f"User with code {user.code} not found", 404)
 
         image_bytes = bytearray(await image.read()) if image else None
-        # image_uri = save image bytes into file and get uri (path)
+        image_uri = save_image(image_bytes, user.code, f"{UPLOAD_DIR}/user")
 
         user.name = request.name
         user.about = request.about
         user.color = request.color
-        # user.image_uri = image_uri
+        user.image_uri = image_uri
         user.updated_at = round(time.time() * 1000)
         user.updated_by = user.username
 
