@@ -1,6 +1,6 @@
 from app.models.user import User
-from app.mapper.user_request import UserRequest
-from app.mapper.user_response import UserResponse, UserResponseV2
+from app.dto.request.user_request import UserRequest
+from app.dto.response.user_response import UserResponse, UserResponseV2
 from app.utils.crypto_utils import PasswordUtils
 from typing import Optional
 import time

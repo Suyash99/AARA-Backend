@@ -1,5 +1,5 @@
-from app.mapper.user_response import UserResponse
-from app.exceptions.tokenException import TokenException
+from app.dto.response.user_response import UserResponse
+from app.exceptions.auth_exception import AuthException
 from datetime import datetime
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
@@ -55,7 +55,7 @@ class PasswordUtils:
             return decrypted_data.decode('utf-8')
 
         except Exception as e:
-            raise TokenException(f"Error decrypting data: {e}", 400)
+            raise AuthException(f"Error decrypting data: {e}", 400)
 
     @staticmethod
     def generate_hashed_token(user_response: UserResponse) -> str:
@@ -81,7 +81,7 @@ class PasswordUtils:
             return base64.urlsafe_b64encode(ciphertext).decode("utf-8")
         except Exception as e:
             logger.error(f"error while generating hash:: {e}")
-            raise TokenException(f"Error while generating hash- {e}", 400)
+            raise AuthException(f"Error while generating hash- {e}", 400)
 
     @staticmethod
     def verify_hashed_token(token: str) -> None:
@@ -108,14 +108,14 @@ class PasswordUtils:
             expiry_time = token_payload.get("expiry_time")
             if not expiry_time:
                 logger.error("Invalid token: Missing expiry time.")
-                raise TokenException("Invalid token: Missing expiry time.", 401)
+                raise AuthException("Invalid token: Missing expiry time.", 401)
 
             # Check if the token is expired
             current_time_ms = time.time() * 1000
             if current_time_ms > expiry_time:
                 readable_date = datetime.fromtimestamp(expiry_time / 1000).isoformat(sep=" ", timespec="seconds")
                 logger.error(f"Token expired at {readable_date}, will return error")
-                raise TokenException("Token has expired!", 410)
+                raise AuthException("Token has expired!", 410)
         except Exception as e:
             logger.error(f"Error verifying token: {e}")
-            raise TokenException(f"Error verifying token: {e}", 400)
+            raise AuthException(f"Error verifying token: {e}", 400)

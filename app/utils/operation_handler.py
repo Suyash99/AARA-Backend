@@ -4,7 +4,7 @@ from typing import TypeVar
 from fastapi import HTTPException, status
 
 from app.exceptions.response_exception import ResponseException
-from app.mapper.serverResponseMapper import ServerResponse
+from app.dto.response.server_response import ServerResponse
 
 T = TypeVar('T')
 

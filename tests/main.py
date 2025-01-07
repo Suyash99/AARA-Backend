@@ -3,7 +3,7 @@ from pydantic import ConfigDict
 
 from objectbox import Entity
 from typing import Optional
-from app.models.baseModel import BaseModel
+from app.models.base_model import BaseModel
 
 from objectbox import Entity
 from typing import Optional

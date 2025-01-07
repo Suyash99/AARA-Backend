@@ -5,7 +5,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import JSONResponse
 from app.utils.constants import APP_ID, API_VERSION
 
-from app.exceptions.tokenException import TokenException
+from app.exceptions.auth_exception import AuthException
 from app.utils.crypto_utils import PasswordUtils
 
 logger = logging.getLogger("main")
@@ -23,11 +23,11 @@ class TokenInterceptorMiddleware(BaseHTTPMiddleware):
             ):
                 token = request.headers.get("Authorization")
                 if not token:
-                    raise TokenException("Missing token in request", 401)
+                    raise AuthException("Missing token in request", 401)
 
                 PasswordUtils.verify_hashed_token(token)
 
-        except TokenException as e:
+        except AuthException as e:
             logger.error(f"TokenException: {str(e)}")
             return JSONResponse(
                 content={

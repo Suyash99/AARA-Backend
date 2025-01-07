@@ -1,13 +1,10 @@
-from app.mapper.serverResponseMapper import ServerResponse
 from app.services.user_service import UserService
-from app.mapper.user_request import UserRequest
+from app.dto.request.user_request import UserRequest
 from app.models.database import get_box
-from app.mapper.tokenRequest import RegenerateTokenRequest
-from app.exceptions.tokenException import TokenException
-from app.utils.crypto_utils import PasswordUtils
+from app.mapper.auth_mapper import RegenerateTokenRequest
 from app.utils.constants import UPLOAD_DIR
-from app.exceptions.userException import UserExceptionError
-from app.repository.userRepository import UserRepository
+from app.exceptions.user_exception import UserExceptionError
+from app.repository.user_repository import UserRepository
 from fastapi.responses import Response
 from requests_toolbelt import MultipartEncoder
 from objectbox import Box
@@ -23,7 +20,7 @@ import logging
 
 logger = logging.getLogger('main')
 
-router = APIRouter(
+router_user = APIRouter(
     prefix=f"/{APP_ID}/{API_VERSION}/user",
     tags=["Users"],
 )
@@ -32,7 +29,7 @@ def get_service(box: Box = Depends(get_box)) -> UserService:
     user_repository = UserRepository(box=box)
     return UserService(user_repository)
 
-@router.post("/", status_code=status.HTTP_200_OK)
+@router_user.post("/", status_code=status.HTTP_200_OK)
 async def create(
     name: str = Form(...),
     username: str = Form(...),
@@ -82,21 +79,21 @@ async def create(
         )
 
 
-@router.get("/{code}")
+@router_user.get("/{code}")
 def get(code: str, user_service: UserService = Depends(get_service)):
     """
     Retrieve a user by ID.
     """
     return handle_operation(partial(user_service.get_user_by_user_code,code))
 
-@router.get("/")
+@router_user.get("/")
 def get_all(user_service: UserService = Depends(get_service)):
     """
     Retrieve all users.
     """
     return handle_operation(user_service.get_all_users)
 
-@router.put(path="/")
+@router_user.put(path="/")
 async def update(
         userBody: str = Form(...),
         userImage: Optional[UploadFile] = File(None),
@@ -107,14 +104,14 @@ async def update(
     image_bytes = bytearray(await userImage.read()) if userImage else None
     return handle_operation(partial(service.update_user, userBody, image_bytes))
 
-@router.delete("/{code}")
+@router_user.delete("/{code}")
 def delete(code: str, user_service: UserService = Depends(get_service)):
     """
     Delete a user by user_code.
     """
     return handle_operation(partial(user_service.delete_user, code))
 
-@router.put("/re-login", status_code=status.HTTP_200_OK)
+@router_user.put("/re-login", status_code=status.HTTP_200_OK)
 def token_regen(
         request: RegenerateTokenRequest,
         user_service: UserService = Depends(get_service)

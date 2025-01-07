@@ -1,4 +1,4 @@
-class TokenException(Exception):
+class AuthException(Exception):
     """
     Custom exception class for token-related errors.
     """

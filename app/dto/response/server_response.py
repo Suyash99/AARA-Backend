@@ -9,5 +9,3 @@ class ServerResponse(BaseModel, Generic[T]):
     error_messages: Optional[List]
     error_message: Optional[str]
     payload: Optional[T] = None
-
-    model_config = {}

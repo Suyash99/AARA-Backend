@@ -1,5 +1,5 @@
 from objectbox import Entity, String, Id
-from app.models.baseModel import BaseModel
+from app.models.base_model import BaseModel
 
 
 @Entity()

@@ -1,16 +1,16 @@
 from typing import List, Optional
-from fastapi import UploadFile
 from app.exceptions.response_exception import ResponseException
-from app.exceptions.userException import UserExceptionError
+from app.exceptions.user_exception import UserExceptionError
 from app.mapper.user_mapper import UserMapper
-from app.mapper.user_request import UserRequest
-from app.mapper.user_response import UserResponse
-from app.repository.userRepository import UserRepository
+from app.dto.request.user_request import UserRequest
+from app.dto.response.user_response import UserResponse
+from app.repository.user_repository import UserRepository
 from app.utils.constants import UPLOAD_DIR
 from app.utils.crypto_utils import PasswordUtils
 from app.utils.generateCodeForId import GenerateCodeForId
 from app.utils.image_utils import delete_image
 from app.utils.image_utils import save_image
+from pathlib import Path
 import json
 import logging
 import time
@@ -33,8 +33,8 @@ class UserService:
             logger.info("User has profile photo, will ensure create img flow!")
             image_url = f"{user_code}_{user_request.username}"
             filename = image_url
-
-            save_image(file_byte_array, filename, '../uploads')
+            directory = Path(__file__).resolve().parent.parent.parent / UPLOAD_DIR
+            save_image(file_byte_array, filename, directory)
 
         user_request.code = user_code
         user = self.create_user_call_db(user_request, image_url)
@@ -46,7 +46,6 @@ class UserService:
         }
 
         return response_payload
-
 
     def reverify_user_and_generate_token(self, user_payload: dict) -> str:
         username = user_payload['username']
@@ -151,9 +150,3 @@ class UserService:
         users = self.user_repository.get_all_users()
         return [UserMapper.to_user_response(user) for user in users]
 
-    def regenerate_token_on_demand(self, username:str,password:str) -> dict:
-        user_payload = {'username': username, 'password': PasswordUtils.decrypt_aes_encoded_text(password)}
-
-        regenerated_token = self.reverify_user_and_generate_token(user_payload)
-        response_payload = {"token": regenerated_token}
-        return response_payload

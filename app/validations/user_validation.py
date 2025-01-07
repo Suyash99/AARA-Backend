@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, model_validator
-from app.repository.userRepository import UserRepository
-from app.exceptions.userException import UserExceptionError
+from app.repository.user_repository import UserRepository
+from app.exceptions.user_exception import UserExceptionError
 from app.utils.constants import USER_EXCEPTION_ERRORS
 
 class UserValidation(BaseModel):

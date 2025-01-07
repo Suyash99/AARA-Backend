@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.middleware.token_middleware import TokenInterceptorMiddleware
-from app.routes.userRoutes import router as userRoutes
+from app.middleware.auth_middleware import TokenInterceptorMiddleware
+from app.routes.user_routes import router_user as user_routes
+from app.routes.auth_routes import router_auth as auth_routes
 import uvicorn
 
 from app.utils.constants import SERVER_IP, SERVER_PORT
@@ -26,7 +27,8 @@ def create_app() -> FastAPI:
     app.add_middleware(TokenInterceptorMiddleware)
 
     #Routes
-    app.include_router(userRoutes)
+    app.include_router(user_routes)
+    app.include_router(auth_routes)
 
     return app
 
