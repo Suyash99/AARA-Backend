@@ -1,6 +1,6 @@
 from app.services.auth_service import AuthService
 from app.models.database import get_box
-from app.mapper.auth_mapper import RegenerateTokenRequest
+from app.dto.request.auth_request import RegenerateAuthRequest
 from app.repository.user_repository import UserRepository
 from app.services.user_service import UserService
 from objectbox import Box
@@ -54,7 +54,7 @@ async def sign_up_user(
 
 @router_auth.put("/sign-in", status_code=status.HTTP_200_OK)
 def user_sign_in(
-        request: RegenerateTokenRequest,
+        request: RegenerateAuthRequest,
         auth_service: AuthService = Depends(get_service)
 ):
     """

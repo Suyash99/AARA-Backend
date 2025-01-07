@@ -4,6 +4,8 @@ APP_NAME = 'AARA'
 
 # Uploads base folder
 UPLOAD_DIR = 'uploads'
+USER_FOLDER = 'users'
+ASSISTANT_FOLDER= 'assistants'
 
 # API Info
 API_VERSION = 'v1'

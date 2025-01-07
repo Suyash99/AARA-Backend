@@ -1,18 +1,13 @@
 from app.services.user_service import UserService
 from app.dto.request.user_request import UserRequest
 from app.models.database import get_box
-from app.mapper.auth_mapper import RegenerateTokenRequest
-from app.utils.constants import UPLOAD_DIR
+from app.dto.request.auth_request import RegenerateAuthRequest
 from app.exceptions.user_exception import UserExceptionError
 from app.repository.user_repository import UserRepository
-from fastapi.responses import Response
-from requests_toolbelt import MultipartEncoder
 from objectbox import Box
 from fastapi import APIRouter, HTTPException, status, File, UploadFile, Form, Depends
 from typing import  Optional
 from functools import partial
-from pathlib import Path
-import json
 
 from app.utils.constants import APP_ID, API_VERSION
 from app.utils.operation_handler import handle_operation
@@ -56,20 +51,7 @@ async def create(
         # Read file if provided
         file_byte_array = bytearray(await user_photo.read()) if user_photo else None
 
-        response_payload = user_service.create_user(user_request, file_byte_array)
-        mfd_fields = {
-            'userBody': json.dumps(response_payload)
-        }
-
-        if file_byte_array:
-            #Image will be in-format f{code}_{username}
-            image_name = f"{response_payload['code']}_{username}.jpg"
-            full_image_path = Path(__file__).resolve().parent.parent.parent / UPLOAD_DIR / image_name
-            mfd_fields['userImage'] =  (image_name, open(full_image_path, 'rb'), 'image/jpeg')
-
-        mfd = MultipartEncoder(fields=mfd_fields)
-
-        return Response(mfd.to_string(), media_type=mfd.content_type)
+        return handle_operation(partial(user_service.create_user,user_request, file_byte_array))
 
     except UserExceptionError as e:
         logger.error(f"User Exception: {e}")
@@ -78,6 +60,13 @@ async def create(
             detail=f"User creation failed: {str(e)}"
         )
 
+@router_user.get("/image/{code}")
+def get_image_by_user_code(code:str, user_service: UserService = Depends(get_service)):
+    """
+    Retrieves an image of user from server
+
+    """
+    return user_service.get_image_from_user_code(code)
 
 @router_user.get("/{code}")
 def get(code: str, user_service: UserService = Depends(get_service)):
@@ -111,9 +100,10 @@ def delete(code: str, user_service: UserService = Depends(get_service)):
     """
     return handle_operation(partial(user_service.delete_user, code))
 
+@NotImplemented
 @router_user.put("/re-login", status_code=status.HTTP_200_OK)
 def token_regen(
-        request: RegenerateTokenRequest,
+        request: RegenerateAuthRequest,
         user_service: UserService = Depends(get_service)
 ):
     """

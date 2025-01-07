@@ -5,6 +5,7 @@ class UserResponse(BaseModel):
     name: str
     about: str
     color: str
+    image_uri: str
 
     class Config:
         arbitrary_types_allowed = True

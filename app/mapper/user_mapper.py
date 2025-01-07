@@ -41,7 +41,8 @@ class UserMapper:
                     code=user.code,
                     name=user.name,
                     about=user.about,
-                    color=user.color
+                    color=user.color,
+                    image_uri=user.image_uri
             )
         else:
             return UserResponseV2(
@@ -49,5 +50,6 @@ class UserMapper:
                 name=user.name,
                 about=user.about,
                 color=user.color,
-                password=user.password
+                password=user.password,
+                image_uri=user.image_uri
             )

@@ -1,3 +1,4 @@
+from http.client import HTTPResponse
 from typing import List, Optional
 from app.exceptions.response_exception import ResponseException
 from app.exceptions.user_exception import UserExceptionError
@@ -5,15 +6,17 @@ from app.mapper.user_mapper import UserMapper
 from app.dto.request.user_request import UserRequest
 from app.dto.response.user_response import UserResponse
 from app.repository.user_repository import UserRepository
-from app.utils.constants import UPLOAD_DIR
+from app.utils.constants import UPLOAD_DIR, USER_FOLDER
 from app.utils.crypto_utils import PasswordUtils
 from app.utils.generateCodeForId import GenerateCodeForId
 from app.utils.image_utils import delete_image
 from app.utils.image_utils import save_image
+from fastapi.responses import FileResponse
 from pathlib import Path
-import json
 import logging
 import time
+
+from app.utils.operation_handler import handle_operation
 
 logger = logging.getLogger("main")
 
@@ -26,26 +29,37 @@ class UserService:
         """
         self.user_repository = user_repository
 
-    def create_user(self, user_request: UserRequest, file_byte_array: Optional[bytearray]) -> dict:
+    def create_user(self, user_request: UserRequest, file_byte_array: Optional[bytearray]) -> str:
         image_url = ''
         user_code = GenerateCodeForId.generate_random_code(6)
+
+        #Check if user exists with same code!
+        if self.get_user_by_user_code(user_code):
+            raise UserExceptionError(f"User already exists with code {user_code}", "code")
+
         if file_byte_array:
             logger.info("User has profile photo, will ensure create img flow!")
-            image_url = f"{user_code}_{user_request.username}"
-            filename = image_url
-            directory = Path(__file__).resolve().parent.parent.parent / UPLOAD_DIR
+            filename = f"{user_code}_{user_request.name}"
+            directory = UPLOAD_DIR / USER_FOLDER
+            image_url = directory
             save_image(file_byte_array, filename, directory)
 
         user_request.code = user_code
-        user = self.create_user_call_db(user_request, image_url)
-        user_json = json.loads(UserMapper.to_user_response(user).model_dump_json())
-        token = PasswordUtils.generate_hashed_token(user)
-        response_payload = {
-            **user_json,
-            'token': token
-        }
+        user= self.create_user_call_db(user_request, image_url)
+        return PasswordUtils.generate_hashed_token(user)
 
-        return response_payload
+    def get_image_from_user_code(self, code:str) -> Optional[FileResponse]:
+        try:
+            user = self.get_user_by_user_code(code)
+
+            if user.image_uri == '':
+                raise Exception(f"Image not found with associated user- {code}")
+
+            file_name = f"{user.code}_{user.name}"
+            return FileResponse(user.image_uri, media_type='application/octet-stream',filename=file_name)
+        except Exception as e:
+            logger.error(f"Caught error in getting image from user-code {code}:: {e}")
+            return handle_operation(lambda _:Exception(f"Something went wrong fetching the image!"))
 
     def reverify_user_and_generate_token(self, user_payload: dict) -> str:
         username = user_payload['username']
@@ -110,7 +124,7 @@ class UserService:
         if not user:
             raise ResponseException(f"User with code {user.code} not found", 404)
 
-        image_uri = save_image(image_bytes, user.code, f"{UPLOAD_DIR}/user")
+        image_uri = save_image(image_bytes, user.code, f"{UPLOAD_DIR}/{USER_FOLDER}")
 
         user.name = request.name
         user.about = request.about
