@@ -3,6 +3,7 @@ from typing import Optional
 
 class AssistantResponse(BaseModel):
     name: str
+    code: str
     temperature: float
     systemPrompt: str
     contextPrompt: str
@@ -12,3 +13,6 @@ class AssistantResponse(BaseModel):
     rvcVoice: str
     about: Optional[str]
     imageUri: Optional[str]
+
+    class Config:
+        arbitrary_types_allowed = True

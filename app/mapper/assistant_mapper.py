@@ -25,7 +25,7 @@ class AssistantMapper:
         )
 
     @staticmethod
-    def to_assistant_response(assistant: Assistant) -> Optional[AssistantResponse]:
+    def to_assistant_response(assistant: Assistant):
         if assistant is None:
             return None
 

@@ -14,7 +14,7 @@ import logging
 
 logger = logging.getLogger('main')
 
-router_auth = APIRouter(
+router = APIRouter(
     prefix=f"/{APP_ID}/{API_VERSION}/auth",
     tags=["Auth"],
 )
@@ -26,7 +26,7 @@ def get_service(box: Box = Depends(get_box)) -> AuthService:
     return AuthService(user_repository,user_service)
 
 
-@router_auth.post("/sign-up", status_code=status.HTTP_200_OK)
+@router.post("/sign-up", status_code=status.HTTP_200_OK)
 async def sign_up_user(
         name: str = Form(...),
         username: str = Form(...),
@@ -52,7 +52,7 @@ async def sign_up_user(
     return auth_service.user_sign_up(incoming_request, file_byte_array)
 
 
-@router_auth.put("/sign-in", status_code=status.HTTP_200_OK)
+@router.put("/sign-in", status_code=status.HTTP_200_OK)
 def user_sign_in(
         request: RegenerateAuthRequest,
         auth_service: AuthService = Depends(get_service)

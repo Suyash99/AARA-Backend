@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.middleware.auth_middleware import TokenInterceptorMiddleware
-from app.routes.user_routes import router_user as user_routes
-from app.routes.auth_routes import router_auth as auth_routes
-from app.routes.assistant_routes import router_assistant as assistant_routes
+from app.routes.user_routes import router as user_routes
+from app.routes.auth_routes import router as auth_routes
+from app.routes.assistant_routes import router as assistant_routes
 import uvicorn
 
 from app.utils.constants import SERVER_IP, SERVER_PORT

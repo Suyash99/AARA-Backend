@@ -49,3 +49,7 @@ build/
 #NOTE: If required uncomment but be vary this will impact the objectbox sync across systems
 *objectbox
 objectbox-model.json
+
+# Server run time folders/files
+uploads/*
+rvc/*

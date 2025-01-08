@@ -8,7 +8,7 @@ from app.dto.response.user_response import UserResponse
 from app.repository.user_repository import UserRepository
 from app.utils.constants import UPLOAD_DIR, USER_FOLDER
 from app.utils.crypto_utils import PasswordUtils
-from app.utils.generateCodeForId import GenerateCodeForId
+from app.utils.generate_code_for_id import GenerateCodeForId
 from app.utils.image_utils import delete_image
 from app.utils.image_utils import save_image
 from fastapi.responses import FileResponse
@@ -19,7 +19,6 @@ import time
 from app.utils.operation_handler import handle_operation
 
 logger = logging.getLogger("main")
-
 
 class UserService:
     def __init__(self, user_repository: UserRepository):
