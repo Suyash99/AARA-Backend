@@ -1,5 +1,5 @@
 from rvc_python.infer import RVCInference
-from app.utils.constants import MODEL_MAP
+from app.utils.constants import RVC_MODEL_MAP
 import os
 import requests
 import zipfile
@@ -11,11 +11,9 @@ def ensure_assets_for_assistant():
     return None
 
 def generate_assistant_response(assistant_name:str):
-    if not assistant_name.upper() in MODEL_MAP:
-        logger.error(f"Input assistant - {assistant_name}, in model- {MODEL_MAP.keys()}")
+    if not assistant_name.upper() in RVC_MODEL_MAP:
+        logger.error(f"Input assistant - {assistant_name}, in model- {RVC_MODEL_MAP.keys()}")
         raise Exception(f"Assistant for {assistant_name} not found!")
-
-
 
     rvc = RVCInference(device="cuda:0")
     rvc.load_model("path/to/model.pth")

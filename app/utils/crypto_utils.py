@@ -62,9 +62,9 @@ class PasswordUtils:
         try:
             # Convert UserResponse object to a JSON string
             user_data = json.loads(user_response.model_dump_json())
-            token_payload = {key: value for key, value in user_data.items() if key != 'image'} #Exclude from token
+            token_payload = user_data
 
-            token_payload['expiry_time'] = (time.time() * 1000) + (1 * 7 * 24 * 60 * 60 * 1000)   # Expire in 1 week
+            token_payload['expiry_time'] = (time.time() * 1000) + (1 * 7 * 24 * 60 * 60 * 1000)   #Expire in 1 week
 
             plaintext = json.dumps(token_payload).encode("utf-8")
 
@@ -84,7 +84,7 @@ class PasswordUtils:
             raise AuthException(f"Error while generating hash- {e}", 400)
 
     @staticmethod
-    def verify_hashed_token(token: str) -> None:
+    def verify_hashed_token(token: str) -> any:
         """
         Verify the hashed token.
         :param token: The token to verify.
@@ -116,6 +116,8 @@ class PasswordUtils:
                 readable_date = datetime.fromtimestamp(expiry_time / 1000).isoformat(sep=" ", timespec="seconds")
                 logger.error(f"Token expired at {readable_date}, will return error")
                 raise AuthException("Token has expired!", 410)
+
+            return token_payload
         except Exception as e:
             logger.error(f"Error verifying token: {e}")
             raise AuthException(f"Error verifying token: {e}", 400)

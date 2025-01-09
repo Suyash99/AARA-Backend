@@ -15,3 +15,6 @@ class User(BaseModel):
     about = String()
     color = String()
     image_uri = String()
+
+    # Gemini
+    gemini_api_key = String()

@@ -78,9 +78,11 @@ class UserService:
         :param user_request: UserRequest object with user details.
         :return: UserResponse object of the newly created user.
         """
-        user = UserMapper.to_user(user_request, image_url)
-
         # User validation will go here!
+        if not user_request.gemini_api_key:
+            raise UserExceptionError("Gemini API Key not provided!", "gemini_api_key")
+
+        user = UserMapper.to_user(user_request, image_url)
 
         created_user = self.user_repository.create_user(user)
         return UserMapper.to_user_response(created_user)

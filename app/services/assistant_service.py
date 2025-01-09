@@ -1,25 +1,31 @@
 from app.exceptions.assistant_exception import AssistantExceptionError
+from app.exceptions.auth_exception import AuthException
 from app.repository.assistant_repository import AssistantRepository
 from app.dto.request.assistant_request import AssistantRequest
 from app.dto.response.assistant_response import AssistantResponse
+from app.dto.request.message_request import MessageRequest
 from app.mapper.assistant_mapper import AssistantMapper
+from app.repository.user_repository import UserRepository
+from app.services.gemini_service import GeminiService
+from app.utils.crypto_utils import PasswordUtils
 from app.utils.generate_code_for_id import GenerateCodeForId
 from app.utils.image_utils import save_image
 from app.utils.load_assistant_assets import generate_assistant_response
-from app.utils.constants import MODEL_MAP, UPLOAD_DIR, ASSISTANT_FOLDER
-
+from app.utils.constants import RVC_MODEL_MAP, UPLOAD_DIR, ASSISTANT_FOLDER
+from fastapi import Request
 from typing import Optional
 import logging
 
 logger = logging.getLogger('main')
 
 class AssistantService:
-    def __init__(self, assistant_repository: AssistantRepository):
+    def __init__(self, assistant_repository: AssistantRepository, user_repository: UserRepository):
         """
         Initialize the AssistantService with a AssistantRepository instance.
         :param assistant_repository: Repository to handle assistant database operations.
         """
         self.assistant_repository = assistant_repository
+        self.user_repository = user_repository
 
     def create_assistant(self, request: str, file_byte_array: Optional[bytearray]) -> AssistantResponse:
         try:
@@ -47,10 +53,24 @@ class AssistantService:
         return AssistantMapper.to_assistant_response(assistant)
 
     def list_assistant_voice_models(self) -> list:
-        return MODEL_MAP.keys()
+        return RVC_MODEL_MAP.keys()
 
-    def run_assistant_response(self, assistant_name: str):
-        return generate_assistant_response(assistant_name)
+    def generate_response(self, message_request: MessageRequest, request: Request):
+        token = request.headers.get('Authorization')
+
+        token_payload = PasswordUtils.verify_hashed_token(token)
+
+        if not token_payload['code']:
+            raise AuthException('Token does not contain required field/s!', 401)
+
+        #Get gemini key from user model
+        user = self.user_repository.get_user_by_code(token_payload['code'])
+
+        gemini_key = user.gemini_api_key
+
+        message_content = message_request.content
+
+        return GeminiService.generate_content(message_content,)
 
     def delete_assistant(self, code:str) -> dict:
         assistant = self.assistant_repository.get_by_code(code)

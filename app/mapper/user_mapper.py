@@ -28,7 +28,8 @@ class UserMapper:
             updated_by=request.code,
             created_at=created_at,
             updated_at=updated_at,
-            image_uri=image_url
+            image_uri=image_url,
+            gemini_api_key = request.gemini_api_key
         )
 
     @staticmethod

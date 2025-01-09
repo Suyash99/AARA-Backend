@@ -6,7 +6,7 @@ APP_NAME = 'AARA'
 RVC_FOLDER = "rvc"
 RVCMD_FOLDER = "rvcmd"
 
-MODEL_MAP = {
+RVC_MODEL_MAP = {
     'MIKU': {
         'url': "https://huggingface.co/juuxn/RVCModels/resolve/main/miku222333333.zip",
         'model_name': "miku222333333.pth",
@@ -20,6 +20,10 @@ MODEL_MAP = {
         'model_name': "glados2333333.pth"
     }
 }
+
+#Gemini
+GEMINI_1_FLASH = 'gemini-1.5-flash'
+GEMINI_2_FLASH = 'gemini-2.0-flash-exp'
 
 # Uploads base folder
 UPLOAD_DIR = 'uploads'
