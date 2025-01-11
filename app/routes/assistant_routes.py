@@ -1,5 +1,6 @@
 from app.dto.request.message_request import MessageRequest
 from app.dto.response.server_response import ServerResponse
+from app.repository.chat_repository import ChatRepository
 from app.repository.user_repository import UserRepository
 from app.services.assistant_service import AssistantService
 from app.repository.assistant_repository import AssistantRepository
@@ -24,7 +25,8 @@ router = APIRouter(
 def get_service(box: Box = Depends(get_box)) -> AssistantService:
     assistant_repository = AssistantRepository(box=box)
     user_repository = UserRepository(box)
-    return AssistantService(assistant_repository,user_repository)
+    chat_repository = ChatRepository(box)
+    return AssistantService(assistant_repository,user_repository,chat_repository)
 
 @router.post("/create", response_model=ServerResponse)
 async def create_assistant(

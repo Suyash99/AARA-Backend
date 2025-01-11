@@ -5,6 +5,11 @@ from typing import Optional, List
 class AssistantRepository:
     def __init__(self, box: Box):
         self.box = box
+
+    def get_by_id(self, id:int) -> Assistant:
+        assistant = self.box.get(id)
+        return assistant if assistant else None
+
     def create(self, assistant_data:Assistant) -> Assistant:
         """Create a new user."""
         self.box.put(assistant_data)

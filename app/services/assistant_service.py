@@ -5,6 +5,7 @@ from app.dto.request.assistant_request import AssistantRequest
 from app.dto.response.assistant_response import AssistantResponse
 from app.dto.request.message_request import MessageRequest
 from app.mapper.assistant_mapper import AssistantMapper
+from app.repository.chat_repository import ChatRepository
 from app.repository.user_repository import UserRepository
 from app.services.gemini_service import GeminiService
 from app.utils.crypto_utils import PasswordUtils
@@ -19,13 +20,18 @@ import logging
 logger = logging.getLogger('main')
 
 class AssistantService:
-    def __init__(self, assistant_repository: AssistantRepository, user_repository: UserRepository):
+    def __init__(self,
+                 assistant_repository: AssistantRepository,
+                 user_repository: UserRepository,
+                 chat_repository: ChatRepository
+                 ):
         """
         Initialize the AssistantService with a AssistantRepository instance.
         :param assistant_repository: Repository to handle assistant database operations.
         """
         self.assistant_repository = assistant_repository
         self.user_repository = user_repository
+        self.chat_repository = chat_repository
 
     def create_assistant(self, request: str, file_byte_array: Optional[bytearray]) -> AssistantResponse:
         try:
@@ -66,11 +72,14 @@ class AssistantService:
         #Get gemini key from user model
         user = self.user_repository.get_user_by_code(token_payload['code'])
 
-        gemini_key = user.gemini_api_key
+        gemini_api_key = user.gemini_api_key
 
         message_content = message_request.content
 
-        return GeminiService.generate_content(message_content,)
+        chat = self.chat_repository.get_by_code(message_request.chatCode)
+        assistant = self.assistant_repository.get_by_id(chat.assistant_id)
+
+        return GeminiService.generate_content(message_content,assistant.systemPrompt,gemini_api_key,assistant.temperature)
 
     def delete_assistant(self, code:str) -> dict:
         assistant = self.assistant_repository.get_by_code(code)
